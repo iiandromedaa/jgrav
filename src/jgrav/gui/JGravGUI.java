@@ -5,7 +5,7 @@ import javax.swing.JPanel;
 import javax.swing.Timer;
 
 import jgrav.Body;
-
+import jgrav.Simulation;
 import static jgrav.Settings.*;
 
 import java.awt.Color;
@@ -18,10 +18,10 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.List;
 
 public class JGravGUI {
+
+    Simulation sim = Simulation.getInstance();
 
     public JGravGUI() {
         JFrame frame = new JFrame("JBoids");
@@ -32,36 +32,24 @@ public class JGravGUI {
     }
 
     private class JGravCanvas extends JPanel implements ActionListener {
-
         private Timer timer;
-
-        private List<Body> bodies;
+        private int frameCount;
+        private MouseHandler mouseHandler;
 
         JGravCanvas() {
-            bodies = new ArrayList<>();
             timer = new Timer(FRAME_TIME, this);
             timer.start();
-            this.setFocusable(true);
-            this.requestFocus();
-            this.addMouseListener(new MouseAdapter() {
-                @Override
-                public void mousePressed(MouseEvent e) {
-                    // left click
-                    if (e.getButton() == MouseEvent.BUTTON1) {  
-                        createBody(e.getX(), e.getY());
-                    }
-                    // right click
-                    if (e.getButton() == MouseEvent.BUTTON3) {
-                        
-                    }
-                }
-            });
-            this.addKeyListener(new KeyAdapter() {
+            mouseHandler = new MouseHandler();
+            // setFocusable(true);
+            requestFocus();
+            addMouseListener(mouseHandler);
+            addMouseMotionListener(mouseHandler);
+            addKeyListener(new KeyAdapter() {
                 @Override
                 public void keyPressed(KeyEvent e) {
                     switch (e.getKeyChar()) {
                         case ' ':
-                            bodies.clear();
+                            sim.getBodies().clear();
                         default:
                             break;
                     }
@@ -74,23 +62,20 @@ public class JGravGUI {
             g.setColor(Color.BLACK);
             g.fillRect(0, 0, getWidth(), getHeight());
 
-            for (Body body : bodies) {
+            for (Body body : sim.getBodies()) {
                 drawBody(body, g);
             }
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            for (Body body : bodies) {
-                body.updatePosition(bodies);
+            frameCount++;
+            for (Body body : sim.getBodies()) {
+                body.updatePosition(sim.getBodies());
             }
+            System.out.printf("time: %.3f sec\n", frameCount/TIME_SCALE);
             repaint();
             Toolkit.getDefaultToolkit().sync();
-        }
-
-        private void createBody(int x, int y) {
-            Body body = new Body(x, y);
-            bodies.add(body);
         }
 
         private void drawBody(Body body, Graphics g) {
@@ -103,7 +88,7 @@ public class JGravGUI {
 
             if (DRAW_LINES) {
                 g2d.setColor(Color.WHITE);
-                for (Body b : bodies) {
+                for (Body b : sim.getBodies()) {
                     g.drawLine((int)body.getX(), (int)body.getY(), (int)b.getX(), (int)b.getY());
                 }
             }
@@ -111,6 +96,46 @@ public class JGravGUI {
             g2d.dispose();
         }
 
+    }
+
+    private class MouseHandler extends MouseAdapter {
+        private int pressX, pressY;
+        private boolean mouseDown;
+
+        @Override
+        public void mousePressed(MouseEvent e) {
+            // left click
+            if (e.getButton() == MouseEvent.BUTTON1) {  
+                pressX = e.getX();
+                pressY = e.getY();
+                mouseDown = true;
+            }
+            // right click
+            if (e.getButton() == MouseEvent.BUTTON3) {
+                
+            }
+        }
+
+        @Override
+        public void mouseReleased(MouseEvent e) {
+            System.out.println(e.getSource());
+            if (e.getButton() == MouseEvent.BUTTON1) {
+                mouseDown = false;
+                Simulation.getInstance().createBody(pressX, pressY, 
+                    e.getX() - pressX/SPACE_SCALE, e.getY() - pressY/SPACE_SCALE);
+            }
+        }
+
+        @Override
+        public void mouseMoved(MouseEvent e) {
+            
+        }
+
+        @Override
+        public void mouseDragged(MouseEvent e) {
+            if (e.getButton() == MouseEvent.BUTTON1)
+                System.out.println((pressX - e.getX()) + ", " + (pressY - e.getY()));
+        }
     }
     
 }
