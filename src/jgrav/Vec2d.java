@@ -30,6 +30,10 @@ public class Vec2d {
         return new Vec2d(Math.cos(angleRad)*length, Math.sin(angleRad)*length);
     }
 
+    public static Vec2d fromZero() {
+        return new Vec2d(0, 0);
+    }
+
     /**
      * @return x component of vector
      */
@@ -58,10 +62,44 @@ public class Vec2d {
         return Math.atan2(y, x);
     }
 
+    public void setX(double x) {
+        this.x = x;
+    }
+
+    public void setY(double y) {
+        this.y = y;
+    }
+
+    public void setLength(double length) {
+        setX(Math.cos(getAngle())*length);
+        setY(Math.sin(getAngle())*length);
+    }
+
+    public void add(Vec2d b) {
+        x += b.getX();
+        y += b.getY();
+    }
+
+    public void zero() {
+        x = 0;
+        y = 0;
+    }
+
     @Override
     public String toString() {
         return String.format("x: %+.3f, y: %+.3f, angle: %+.3f rad, %.3f deg, length: %+.3f",
             getX(), getY(), getAngle(), Math.toDegrees(getAngle()), getLength());
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof Vec2d) {
+            if (((Vec2d)obj).getX() == x && ((Vec2d)obj).getY() == y)
+                return true;
+            else
+                return false;
+        } else
+            return super.equals(obj);
     }
 
 }
