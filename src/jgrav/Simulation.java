@@ -1,8 +1,6 @@
 package jgrav;
 
-import static jgrav.Settings.SPACE_SCALE;
-import static jgrav.Settings.TIME_MULTIPLIER;
-import static jgrav.Settings.TIME_SCALE;
+import static jgrav.Settings.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,6 +11,7 @@ public class Simulation {
     private List<Body> bodies; 
     private boolean pause;
     private int timesteps;
+    private double simTime;
 
     private Simulation() {
         bodies = new ArrayList<>();
@@ -58,7 +57,7 @@ public class Simulation {
     }
 
     public double pxFrToMSec(double v) {
-        return v*(((1/TIME_SCALE)/SPACE_SCALE)*TIME_MULTIPLIER);
+        return v*((SPACE_SCALE/(1/TIME_SCALE))*TIME_MULTIPLIER);
     }
 
     public Vec2d pxFrToMSec(Vec2d v) {
@@ -66,6 +65,22 @@ public class Simulation {
     }
 
     public double mSecToPxFr(double v) {
-        return v*((SPACE_SCALE/(1/TIME_SCALE))*TIME_MULTIPLIER);
+        return v*(((1/TIME_SCALE)/SPACE_SCALE)*TIME_MULTIPLIER);
+    }
+
+    public void accelerate() {
+        accelerate(10);
+    }
+
+    public void accelerate(int t) {
+        TIME_MULTIPLIER *= t;
+    }
+
+    public void decelerate() {
+        decelerate(10);
+    }
+
+    public void decelerate(int t) {
+        TIME_MULTIPLIER /= t;
     }
 }

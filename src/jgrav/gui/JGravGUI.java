@@ -21,7 +21,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
-import java.awt.event.MouseWheelListener;
 
 public class JGravGUI {
 
@@ -59,6 +58,12 @@ public class JGravGUI {
                         case 'p':
                             sim.togglePause();
                             break;
+                        case 'i':
+                            sim.accelerate();
+                            break;
+                        case 'k':
+                            sim.decelerate();
+                            break;
                         default:
                             break;
                     }
@@ -79,13 +84,21 @@ public class JGravGUI {
 
             if (mouseHandler.mouse2Down || ALWAYS_LABEL) {
                 int curX = mouseHandler.curX; int curY  = mouseHandler.curY;
-                g.drawString(String.format("%.3f sec", sim.getSteps()/TIME_SCALE), 
+                int pressX = mouseHandler.pressX; int pressY = mouseHandler.pressY;
+                // sim info
+                String secs = String.format("%.3f sec", sim.getSteps()/TIME_SCALE);
+                g.drawString(secs, 
                     25, getHeight()-25);
+                String speed = String.format("%.3fx", TIME_MULTIPLIER);
+                g.drawString(speed, 
+                    g.getFontMetrics().stringWidth(secs)+50, getHeight()-25);
+                // placing widget
                 drawBody(new Body(
                     curX, curY, mouseHandler.selectedMass*MASS_MULTIPLIER,
-                    Vec2d.fromComponent(
-                        (mouseHandler.mouseDown) ? (curX - mouseHandler.pressX)/SPACE_SCALE : 0, 
-                        (mouseHandler.mouseDown) ? (curY - mouseHandler.pressY)/SPACE_SCALE : 0
+                    sim.pxFrToMSec(
+                        (mouseHandler.mouseDown) ? 
+                            createScreenScaledVelocity
+                                (curX-pressX, curY-pressY) : Vec2d.fromZero()
                     )), g, false);
             }
 
@@ -104,7 +117,7 @@ public class JGravGUI {
 
         private void drawBody(Body body, Graphics g, boolean fill) {
             Graphics2D g2d = (Graphics2D) g.create();
-            int r = (int)(RADIUS_MULT * Math.pow(body.getMass(), RADIUS_POWER) + 10);
+            int r = calculateScreenRadius(body);
             g2d.translate(body.getX(), body.getY());
 
             g2d.setColor(Color.WHITE);
@@ -137,7 +150,17 @@ public class JGravGUI {
         private void drawLabel(int x, int y, double mass, 
             Vec2d velocity, int r, Graphics g) {
             g.drawString(String.format("%.3g kg", mass), x+r/2, y-r/2);
-            g.drawString(String.format("%.1f m/s", velocity.getLength()), x+r/2, y+r/2);
+            String vel = String.format("%.1f m/s", velocity.getLength());
+            g.drawString(vel, x-r/2-g.getFontMetrics().stringWidth(vel), y+r/2);
+        }
+
+        private int calculateScreenRadius(Body body) {
+            return (int)(RADIUS_MULT * Math.pow(body.getMass(), RADIUS_POWER) + 5);
+        }
+
+        private static Vec2d createScreenScaledVelocity(int dx, int dy) {
+            return Vec2d.fromComponent(dx/Math.pow(TIME_SCALE*TIME_MULTIPLIER, 2),
+                dy/Math.pow(TIME_SCALE*TIME_MULTIPLIER, 2));
         }
 
     }
@@ -168,10 +191,9 @@ public class JGravGUI {
             if (e.getButton() == MouseEvent.BUTTON1) {
                 mouseDown = false;
                 sim.createBody(pressX, pressY, selectedMass * MASS_MULTIPLIER,
-                    sim.pxFrToMSec(Vec2d.fromComponent(
-                        (e.getX() - pressX)/(TIME_SCALE*TIME_MULTIPLIER),
-                        (e.getY() - pressY)/(TIME_SCALE*TIME_MULTIPLIER)
-                    ))
+                    sim.pxFrToMSec(JGravCanvas.createScreenScaledVelocity
+                        (e.getX() - pressX, e.getY() - pressY)
+                    )
                 );
             }
         }

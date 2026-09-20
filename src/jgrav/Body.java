@@ -1,11 +1,6 @@
 package jgrav;
 
-import static jgrav.Settings.G;
-import static jgrav.Settings.MASS_MULTIPLIER;
-import static jgrav.Settings.SPACE_SCALE;
-import static jgrav.Settings.TIME_MULTIPLIER;
-import static jgrav.Settings.TIME_SCALE;
-
+import static jgrav.Settings.*;
 import java.util.List;
 
 /**
@@ -66,7 +61,6 @@ public class Body {
         for (Body body : bodies) {
             if (body != this) {
                 Vec2d fg = getFg(body);
-                System.out.println(fg.getLength());
                 dax += (fg.getX()/(mass));
                 day += (fg.getY()/(mass));
             }

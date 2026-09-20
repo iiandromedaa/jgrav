@@ -4,6 +4,11 @@ public class Settings {
     private Settings() {}
 
     /**
+     * length of a physics timestep in ms
+     */
+    public static final double PHYSICS_DT = 1;
+    
+    /**
      * target delay between frames in ms
      * (suggested 16ms)
      */
@@ -13,7 +18,7 @@ public class Settings {
      * multiplier for speed of time, 1 real second = 1*TIME_MULTIPLIER seconds
      * (suggested 1)
      */
-    public static final double TIME_MULTIPLIER = 1;
+    public static volatile double TIME_MULTIPLIER = 10;
 
     /**
      * equation to get number of frames in 1 second
@@ -29,9 +34,9 @@ public class Settings {
 
     /**
      * scales the masses of all objects by this
-     * (suggested 1e12)
+     * (suggested 1e13)
      */
-    public static final double MASS_MULTIPLIER = 1e11;
+    public static final double MASS_MULTIPLIER = 1e13;
 
     /**
      * draw F_G as lines?
