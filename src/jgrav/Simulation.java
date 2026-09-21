@@ -2,6 +2,7 @@ package jgrav;
 
 import static jgrav.Settings.*;
 
+import java.awt.SplashScreen;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,13 +11,15 @@ public class Simulation {
     private static Simulation instance;
     private List<Body> bodies; 
     private boolean pause;
-    private int timesteps;
     private double simTime;
+    private double realTime;
+    private double realDt;
 
     private Simulation() {
         bodies = new ArrayList<>();
         pause = false;
-        timesteps = 0;
+        realTime = 0;
+        simTime = 0;
     }
 
     public static Simulation getInstance() {
@@ -46,18 +49,32 @@ public class Simulation {
         pause = !pause;
     }
 
-    public void step() {
+    public void step(double dt) {
         if (pause)
             return;
-        timesteps++;
+        realTime += dt;
+        simTime += (dt*TIME_MULTIPLIER);
+        realDt += dt * TIME_MULTIPLIER;
+        while (realDt > PHYSICS_DT) {
+            if (LOGGING)
+                System.out.printf(
+                    "Stepped! Simtime: %.3fs Realtime: %.3fs Accumulator: %.3fs Dt: %.3fs%n",
+                    simTime, realTime, realDt, dt);
+            updateBodies();
+            realDt -= PHYSICS_DT;
+        }
     }
 
-    public int getSteps() {
-        return timesteps;
+    public double getRealTime() {
+        return realTime;
+    }
+
+    public double getSimTime() {
+        return simTime;
     }
 
     public double pxFrToMSec(double v) {
-        return v*((SPACE_SCALE/(1/TIME_SCALE))*TIME_MULTIPLIER);
+        return v*SPACE_SCALE/PHYSICS_DT;
     }
 
     public Vec2d pxFrToMSec(Vec2d v) {
@@ -65,11 +82,11 @@ public class Simulation {
     }
 
     public double mSecToPxFr(double v) {
-        return v*(((1/TIME_SCALE)/SPACE_SCALE)*TIME_MULTIPLIER);
+        return v*PHYSICS_DT/SPACE_SCALE;
     }
 
     public void accelerate() {
-        accelerate(10);
+        accelerate(5);
     }
 
     public void accelerate(int t) {
@@ -77,10 +94,12 @@ public class Simulation {
     }
 
     public void decelerate() {
-        decelerate(10);
+        decelerate(5);
     }
 
     public void decelerate(int t) {
         TIME_MULTIPLIER /= t;
+        if (TIME_MULTIPLIER < 1)
+            TIME_MULTIPLIER = 1;
     }
 }

@@ -11,7 +11,6 @@ public class Body {
     private double x, y;
     private double mass;
     private Vec2d velocity;
-    private Simulation sim = Simulation.getInstance();
 
     public Body(double x, double y, double mass, Vec2d velocity) {
         this.x = x;
@@ -22,9 +21,9 @@ public class Body {
 
     public void updatePosition(List<Body> bodies) {
         updateVelocity(bodies);
-        // divided by timescale and time multiplier so that velocity is in specifically pixels/real sec
-        x += sim.mSecToPxFr(velocity.getX());
-        y += sim.mSecToPxFr(velocity.getY());
+        // this is called euler integration apparently
+        x += (velocity.getX()*PHYSICS_DT);
+        y += (velocity.getY()*PHYSICS_DT);
     }
 
     public double getX() {
@@ -44,8 +43,8 @@ public class Body {
     }
 
     public Vec2d distanceToBody(Body body) {
-        return Vec2d.fromComponent((body.getX() - x)*SPACE_SCALE,
-            (body.getY() - y)*SPACE_SCALE);
+        return Vec2d.fromComponent((body.getX() - x),
+            (body.getY() - y));
     }
 
     public Vec2d getFg(Body body) {
@@ -61,11 +60,12 @@ public class Body {
         for (Body body : bodies) {
             if (body != this) {
                 Vec2d fg = getFg(body);
+                // System.out.println(fg);
                 dax += (fg.getX()/(mass));
                 day += (fg.getY()/(mass));
             }
         }
-        velocity.add(Vec2d.fromComponent(dax, day));
+        velocity.add(Vec2d.fromComponent(dax*PHYSICS_DT, day*PHYSICS_DT));
     }
 
 }

@@ -38,7 +38,9 @@ public class JGravGUI {
         private Timer timer;
         private MouseHandler mouseHandler;
 
-        private double t;
+        //todo refactor so this is the canvas' responsibility
+        private double zoom = 1;
+        private int panX = 0, panY = 0;
 
         JGravCanvas() {
             timer = new Timer(FRAME_TIME, this);
@@ -64,6 +66,9 @@ public class JGravGUI {
                         case 'k':
                             sim.decelerate();
                             break;
+                        case 'n':
+                            mouseHandler.selectedMass = -mouseHandler.selectedMass;
+                            break;
                         default:
                             break;
                     }
@@ -73,12 +78,13 @@ public class JGravGUI {
 
         @Override
         protected void paintComponent(Graphics g) {
-            g.setColor(Color.BLACK);
-            g.fillRect(0, 0, getWidth(), getHeight());
-            g.setColor(Color.WHITE);
+            Graphics2D g2d = (Graphics2D) g.create();
+            g2d.setColor(Color.BLACK);
+            g2d.fillRect(0, 0, getWidth(), getHeight());
+            g2d.setColor(Color.WHITE);
 
             if (mouseHandler.mouseDown) {
-                g.drawLine(mouseHandler.pressX, mouseHandler.pressY, 
+                g2d.drawLine(mouseHandler.pressX, mouseHandler.pressY, 
                     mouseHandler.curX, mouseHandler.curY);
             }
 
@@ -86,31 +92,34 @@ public class JGravGUI {
                 int curX = mouseHandler.curX; int curY  = mouseHandler.curY;
                 int pressX = mouseHandler.pressX; int pressY = mouseHandler.pressY;
                 // sim info
-                String secs = String.format("%.3f sec", sim.getSteps()/TIME_SCALE);
-                g.drawString(secs, 
+                String secs = String.format("%.3f sec", sim.getSimTime());
+                g2d.drawString(secs, 
                     25, getHeight()-25);
                 String speed = String.format("%.3fx", TIME_MULTIPLIER);
-                g.drawString(speed, 
-                    g.getFontMetrics().stringWidth(secs)+50, getHeight()-25);
+                g2d.drawString(speed, 
+                    g2d.getFontMetrics().stringWidth(secs)+50, getHeight()-25);
                 // placing widget
                 drawBody(new Body(
-                    curX, curY, mouseHandler.selectedMass*MASS_MULTIPLIER,
+                    curX*SPACE_SCALE, curY*SPACE_SCALE, mouseHandler.selectedMass*MASS_MULTIPLIER,
                     sim.pxFrToMSec(
                         (mouseHandler.mouseDown) ? 
                             createScreenScaledVelocity
                                 (curX-pressX, curY-pressY) : Vec2d.fromZero()
-                    )), g, false);
+                    )), g2d, false);
             }
 
+            System.out.println(mouseHandler.zoom);
+            g2d.translate(mouseHandler.camX, mouseHandler.camY);
+            g2d.scale(mouseHandler.zoom*SPACE_SCALE, mouseHandler.zoom*SPACE_SCALE);
+
             for (Body body : sim.getBodies()) {
-                drawBody(body, g, true);
+                drawBody(body, g2d, true);
             }
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            sim.step();
-            sim.updateBodies();
+            sim.step(FRAME_TIME*0.001);
             repaint();
             Toolkit.getDefaultToolkit().sync();
         }
@@ -118,22 +127,24 @@ public class JGravGUI {
         private void drawBody(Body body, Graphics g, boolean fill) {
             Graphics2D g2d = (Graphics2D) g.create();
             int r = calculateScreenRadius(body);
-            g2d.translate(body.getX(), body.getY());
+            int scrx = (int) (body.getX()/SPACE_SCALE);
+            int scry = (int) (body.getY()/SPACE_SCALE);
 
             g2d.setColor(Color.WHITE);
             if (fill)
-                g2d.fillOval(-r/2, -r/2, r, r);
+                g2d.fillOval(scrx-r, scry-r, 2*r, 2*r);
             else
-                g2d.drawOval(-r/2, -r/2, r, r);
+                g2d.drawOval(scrx-r, scry-r, 2*r, 2*r);
 
             if (DRAW_FORCES) {
                 for (Body b : sim.getBodies()) {
-                    g.drawLine((int)body.getX(), (int)body.getY(), (int)b.getX(), (int)b.getY());
+                    g.drawLine(scrx, scry, 
+                        (int)(b.getX()/SPACE_SCALE), (int)(b.getY()/SPACE_SCALE));
                 }
             }
 
             if (mouseHandler.mouse2Down || ALWAYS_LABEL) {
-                drawLabel(0, 0, body.getMass(), body.getVelocity(), r, g2d);
+                drawLabel(scrx, scry, body.getMass(), body.getVelocity(), r, g2d);
             }
 
             g2d.dispose();
@@ -149,18 +160,18 @@ public class JGravGUI {
          */
         private void drawLabel(int x, int y, double mass, 
             Vec2d velocity, int r, Graphics g) {
-            g.drawString(String.format("%.3g kg", mass), x+r/2, y-r/2);
+            g.drawString(String.format("%.3g kg", mass), x+r, y-r);
             String vel = String.format("%.1f m/s", velocity.getLength());
-            g.drawString(vel, x-r/2-g.getFontMetrics().stringWidth(vel), y+r/2);
+            g.drawString(vel, x-r-g.getFontMetrics().stringWidth(vel), y+r);
         }
 
         private int calculateScreenRadius(Body body) {
-            return (int)(RADIUS_MULT * Math.pow(body.getMass(), RADIUS_POWER) + 5);
+            return (int)(RADIUS_MULT * Math.pow(body.getMass(), RADIUS_POWER)/2 + 5);
         }
 
         private static Vec2d createScreenScaledVelocity(int dx, int dy) {
-            return Vec2d.fromComponent(dx/Math.pow(TIME_SCALE*TIME_MULTIPLIER, 2),
-                dy/Math.pow(TIME_SCALE*TIME_MULTIPLIER, 2));
+            return Vec2d.fromComponent(dx/(FRAME_TIME*FRAME_TIME*TIME_MULTIPLIER),
+                dy/(FRAME_TIME*FRAME_TIME*TIME_MULTIPLIER));
         }
 
     }
@@ -170,12 +181,19 @@ public class JGravGUI {
         private int curX, curY;
         private boolean mouseDown;
         private boolean mouse2Down;
+        private boolean middleDown;
         private double selectedMass = 1;
+        private double zoom = 1;
+
+        private int prevMmbX;
+        private int prevMmbY;
+        private int camX = 0;
+        private int camY = 0;
 
         @Override
         public void mousePressed(MouseEvent e) {
             // left click
-            if (e.getButton() == MouseEvent.BUTTON1) {  
+            if (e.getButton() == MouseEvent.BUTTON1 && !middleDown) {  
                 pressX = curX = e.getX();
                 pressY = curY = e.getY();
                 mouseDown = true;
@@ -184,17 +202,27 @@ public class JGravGUI {
             if (e.getButton() == MouseEvent.BUTTON3) {
                 mouse2Down = !mouse2Down;
             }
+            // mmb
+            if (e.getButton() == MouseEvent.BUTTON2 && !mouseDown) {
+                prevMmbX = e.getX();
+                prevMmbY = e.getY();
+                middleDown = true;
+            }
         }
 
         @Override
         public void mouseReleased(MouseEvent e) {
-            if (e.getButton() == MouseEvent.BUTTON1) {
+            if (e.getButton() == MouseEvent.BUTTON1 && !middleDown) {
                 mouseDown = false;
-                sim.createBody(pressX, pressY, selectedMass * MASS_MULTIPLIER,
+                sim.createBody((int)(pressX-camX*SPACE_SCALE), (int)(pressY-camY*SPACE_SCALE), 
+                    selectedMass * MASS_MULTIPLIER,
                     sim.pxFrToMSec(JGravCanvas.createScreenScaledVelocity
                         (e.getX() - pressX, e.getY() - pressY)
                     )
                 );
+            }
+            if (e.getButton() == MouseEvent.BUTTON2 && !mouseDown) {
+                middleDown = false;
             }
         }
 
@@ -203,6 +231,14 @@ public class JGravGUI {
             if (mouseDown) {
                 curX = e.getX(); 
                 curY = e.getY();
+            }
+            if (middleDown) {
+                int dx = e.getX() - prevMmbX;
+                int dy = e.getY() - prevMmbY;
+                camX -= dx/SPACE_SCALE/zoom;
+                camY -= dy/SPACE_SCALE/zoom;
+                prevMmbX = e.getX();
+                prevMmbY = e.getY();
             }
         }
 
@@ -215,9 +251,11 @@ public class JGravGUI {
         @Override
         public void mouseWheelMoved(MouseWheelEvent e) {
             if (mouse2Down) {
-                selectedMass += -selectedMass*0.1*e.getPreciseWheelRotation();
-                if (selectedMass < 1)
+                selectedMass *= Math.pow(1.5, -e.getPreciseWheelRotation());
+                if (selectedMass > 0 && selectedMass < 1)
                     selectedMass = 1;
+            } else {
+                zoom *= Math.pow(1.1, -e.getPreciseWheelRotation());
             }
         }
     }

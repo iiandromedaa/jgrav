@@ -4,10 +4,10 @@ public class Settings {
     private Settings() {}
 
     /**
-     * length of a physics timestep in ms
+     * length of a physics timestep in seconds
      */
-    public static final double PHYSICS_DT = 1;
-    
+    public static final double PHYSICS_DT = 0.005;
+
     /**
      * target delay between frames in ms
      * (suggested 16ms)
@@ -15,10 +15,10 @@ public class Settings {
     public static final int FRAME_TIME = 16;
 
     /**
-     * multiplier for speed of time, 1 real second = 1*TIME_MULTIPLIER seconds
+     * default multiplier for speed of time, 1 real second = 1*TIME_MULTIPLIER seconds
      * (suggested 1)
      */
-    public static volatile double TIME_MULTIPLIER = 10;
+    public static volatile double TIME_MULTIPLIER = 1;
 
     /**
      * equation to get number of frames in 1 second
@@ -30,13 +30,13 @@ public class Settings {
      * how many meters in 1 pixel
      * (suggested 1)
      */
-    public static final double SPACE_SCALE = 100;
+    public static final double SPACE_SCALE = 1;
 
     /**
      * scales the masses of all objects by this
-     * (suggested 1e13)
+     * (suggested 1e10)
      */
-    public static final double MASS_MULTIPLIER = 1e13;
+    public static final double MASS_MULTIPLIER = 1e10;
 
     /**
      * draw F_G as lines?
@@ -55,13 +55,20 @@ public class Settings {
 
     /**
      * power of the proportionality p between mass and radius of bodies onscreen, in that r = km^RADIUS_SCALING
-     * (suggested 0.4)
+     * (suggested 0.3)
      */
-    public static final double RADIUS_POWER = 0.3;
+    public static final double RADIUS_POWER = 0.275;
 
     /**
      * constant multiplier k in the proportionality between radius and mass, in that r = RADIUS_SCALING*m^p
      */
     public static final double RADIUS_MULT = 0.001;
+
+    public static final boolean LOGGING = true;
+
+    /**
+     * should bodies collide with each other? smaller one is destroyed, if equal, bodies are both destroyed
+     */
+    public static final boolean BODY_COLLISION = false;
 
 }
