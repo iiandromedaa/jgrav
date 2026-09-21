@@ -6,7 +6,7 @@ public class Settings {
     /**
      * length of a physics timestep in seconds
      */
-    public static final double PHYSICS_DT = 0.005;
+    public static final double PHYSICS_DT = 0.016;
 
     /**
      * target delay between frames in ms
@@ -30,7 +30,7 @@ public class Settings {
      * how many meters in 1 pixel
      * (suggested 1)
      */
-    public static final double SPACE_SCALE = 1;
+    public static final double SPACE_SCALE = 100;
 
     /**
      * scales the masses of all objects by this
@@ -64,7 +64,13 @@ public class Settings {
      */
     public static final double RADIUS_MULT = 0.001;
 
-    public static final boolean LOGGING = true;
+    /**
+     * logging level, accumulative<br>
+     * 3 = info + warn + error<br>
+     * 2 = warn + error<br>
+     * 1 = error<br>
+     */
+    public static final int LOGGING = 2;
 
     /**
      * should bodies collide with each other? smaller one is destroyed, if equal, bodies are both destroyed

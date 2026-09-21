@@ -59,13 +59,22 @@ public class Body {
         double day = 0;
         for (Body body : bodies) {
             if (body != this) {
+                if (distanceToBody(body).getLength() < 5*SPACE_SCALE && body.mass < mass) {
+                    //TODO figure out the thread blocking for this
+                    // Simulation.getInstance().destroyBody(body);
+                }
                 Vec2d fg = getFg(body);
-                // System.out.println(fg);
                 dax += (fg.getX()/(mass));
                 day += (fg.getY()/(mass));
             }
         }
         velocity.add(Vec2d.fromComponent(dax*PHYSICS_DT, day*PHYSICS_DT));
+    }
+
+    @Override
+    public String toString() {
+        return String.format("Body: x: %.3fm y: %.3fm Mass: %.3gkg vx: %.3f vy: %.3f", 
+            x, y, mass, velocity.getX(), velocity.getY());
     }
 
 }

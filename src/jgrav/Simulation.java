@@ -2,14 +2,14 @@ package jgrav;
 
 import static jgrav.Settings.*;
 
-import java.awt.SplashScreen;
 import java.util.ArrayList;
 import java.util.List;
 
 public class Simulation {
 
     private static Simulation instance;
-    private List<Body> bodies; 
+    private volatile List<Body> bodies; 
+    private volatile List<Body> cullList;
     private boolean pause;
     private double simTime;
     private double realTime;
@@ -17,6 +17,7 @@ public class Simulation {
 
     private Simulation() {
         bodies = new ArrayList<>();
+        cullList = new ArrayList<>();
         pause = false;
         realTime = 0;
         simTime = 0;
@@ -33,16 +34,33 @@ public class Simulation {
         bodies.add(body);
     }
 
+    public void clearBodies() {
+        cullList.addAll(bodies);
+        log("Cleared bodies!", LogSeverity.INFO);
+    }
+
+    public void destroyBody(Body body) {
+        bodies.remove(body);
+    }
+
     public List<Body> getBodies() {
         return bodies;
     }
 
     public void updateBodies() {
-        if (pause)
+        if (pause || bodies.isEmpty())
             return;
         for (Body body : bodies) {
             body.updatePosition(bodies);
+            if (body.getVelocity().getLength() > 1e7) {
+                log("Body marked for deletion, absurd velocity", LogSeverity.WARN);
+                cullList.add(body);
+            }
+            log(body.toString(), LogSeverity.INFO);
         }
+        if (!cullList.isEmpty())
+            bodies.removeAll(cullList);
+        cullList.clear();
     }
 
     public void togglePause() {
@@ -56,10 +74,9 @@ public class Simulation {
         simTime += (dt*TIME_MULTIPLIER);
         realDt += dt * TIME_MULTIPLIER;
         while (realDt > PHYSICS_DT) {
-            if (LOGGING)
-                System.out.printf(
+            log(String.format(
                     "Stepped! Simtime: %.3fs Realtime: %.3fs Accumulator: %.3fs Dt: %.3fs%n",
-                    simTime, realTime, realDt, dt);
+                    simTime, realTime, realDt, dt), LogSeverity.INFO);
             updateBodies();
             realDt -= PHYSICS_DT;
         }
@@ -102,4 +119,26 @@ public class Simulation {
         if (TIME_MULTIPLIER < 1)
             TIME_MULTIPLIER = 1;
     }
+
+    public void log(String msg, LogSeverity severity) {
+        if (severity.getSeverity() >= LOGGING)
+            System.out.printf("[%s] %s%n", severity.name(), msg);
+    }
+
+    public enum LogSeverity {
+        INFO(1),
+        WARN(2),
+        ERROR(3);
+
+        private final int severity;
+
+        LogSeverity(int severity) {
+            this.severity = severity;
+        }
+
+        public int getSeverity() {
+            return severity;
+        }
+    }
+
 }
