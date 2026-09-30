@@ -61,6 +61,9 @@ public class Body {
      * @param body body to combine into this (will be destroyed)
      */
     public void combine(Body body) {
+        Simulation.getInstance().log(
+            String.format("Body collision at %f, %f", x, y), LogSeverity.INFO);
+            
         double newmass = mass + body.getMass();
         Vec2d p = Vec2d.multScalar(velocity, mass);
         Vec2d otherP = Vec2d.multScalar(body.getVelocity(), body.getMass());
@@ -78,7 +81,6 @@ public class Body {
             if (body != this) {
                 if (BODY_COLLISION) {
                     if (distanceToBody(body).getLength() < calculateScreenRadius()*SPACE_SCALE) {
-                        Simulation.getInstance().log(String.format("Body collision at %f, %f", x, y), LogSeverity.WARN);
                         if (body.getMass() <= mass) {
                             combine(body);
                         }

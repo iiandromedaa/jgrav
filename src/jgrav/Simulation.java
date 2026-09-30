@@ -33,6 +33,7 @@ public class Simulation {
 
     public void createBody(double x, double y, double mass, Vec2d v) {
         Body body = new Body(x, y, mass, v);
+        log(String.format("Body created at %f, %f", x, y), LogSeverity.INFO);
         createList.add(body);
     }
 
@@ -57,7 +58,7 @@ public class Simulation {
             return;
         for (Body body : bodies) {
             body.updatePosition(bodies);
-            if (body.getVelocity().getLength() > 1e6) {
+            if (body.getVelocity().getLength() > 1e7) {
                 log("Body marked for deletion, absurd velocity", LogSeverity.WARN);
                 cullList.add(body);
             }
