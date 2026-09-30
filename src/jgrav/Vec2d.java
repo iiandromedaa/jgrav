@@ -75,9 +75,20 @@ public class Vec2d {
         setY(Math.sin(getAngle())*length);
     }
 
-    public void add(Vec2d b) {
-        x += b.getX();
-        y += b.getY();
+    public static Vec2d add(Vec2d a, Vec2d b) {
+        return Vec2d.fromComponent(a.getX() + b.getX(), a.getY() + b.getY());
+    }
+
+    public static Vec2d subtract(Vec2d a, Vec2d b) {
+        return Vec2d.fromComponent(a.getX() - b.getX(), a.getY() - b.getY());
+    }
+
+    public static Vec2d multScalar(Vec2d a, double m) {
+        return Vec2d.fromComponent(a.getX() * m, a.getY() * m);
+    }
+
+    public static Vec2d divScalar(Vec2d a, double d) {
+        return Vec2d.fromComponent(a.getX() / d, a.getY() / d);
     }
 
     public void zero() {

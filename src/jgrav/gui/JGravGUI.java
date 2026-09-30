@@ -130,7 +130,7 @@ public class JGravGUI {
 
         private void drawBody(Body body, Graphics g, boolean fill) {
             Graphics2D g2d = (Graphics2D) g.create();
-            int r = calculateScreenRadius(body);
+            int r = body.calculateScreenRadius();
             int scrx = (int) (body.getX()/SPACE_SCALE);
             int scry = (int) (body.getY()/SPACE_SCALE);
 
@@ -183,10 +183,6 @@ public class JGravGUI {
                     displacement += g2d.getFontMetrics().stringWidth(strings[i]) + 25;
                 }
             }
-        }
-
-        private int calculateScreenRadius(Body body) {
-            return (int)(RADIUS_MULT * Math.pow(Math.abs(body.getMass()), RADIUS_POWER)/2 + 5);
         }
 
         private static Vec2d createScreenScaledVelocity(int dx, int dy) {

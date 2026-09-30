@@ -3,6 +3,8 @@ package jgrav;
 import static jgrav.Settings.*;
 import java.util.List;
 
+import jgrav.Simulation.LogSeverity;
+
 /**
  * Body
  */
@@ -54,21 +56,44 @@ public class Body {
         ));
     }
 
+    /**
+     * combines two bodies into 1, combining their mass and conserving momentum
+     * @param body body to combine into this (will be destroyed)
+     */
+    public void combine(Body body) {
+        double newmass = mass + body.getMass();
+        Vec2d p = Vec2d.multScalar(velocity, mass);
+        Vec2d otherP = Vec2d.multScalar(body.getVelocity(), body.getMass());
+        Vec2d newvelocity = Vec2d.divScalar(Vec2d.add(p, otherP), mass);
+
+        Simulation.getInstance().destroyBody(body);
+        Simulation.getInstance().destroyBody(this);
+        Simulation.getInstance().createBody(x, y, newmass, newvelocity);
+    }
+
     private void updateVelocity(List<Body> bodies) {
         double dax = 0;
         double day = 0;
         for (Body body : bodies) {
             if (body != this) {
-                if (distanceToBody(body).getLength() < 5*SPACE_SCALE && body.mass < mass) {
-                    //TODO figure out the thread blocking for this
-                    // Simulation.getInstance().destroyBody(body);
+                if (BODY_COLLISION) {
+                    if (distanceToBody(body).getLength() < calculateScreenRadius()*SPACE_SCALE) {
+                        Simulation.getInstance().log(String.format("Body collision at %f, %f", x, y), LogSeverity.WARN);
+                        if (body.getMass() <= mass) {
+                            combine(body);
+                        }
+                    }
                 }
                 Vec2d fg = getFg(body);
                 dax += (fg.getX()/(mass));
                 day += (fg.getY()/(mass));
             }
         }
-        velocity.add(Vec2d.fromComponent(dax*PHYSICS_DT, day*PHYSICS_DT));
+        velocity = Vec2d.add(Vec2d.fromComponent(dax*PHYSICS_DT, day*PHYSICS_DT), velocity);
+    }
+
+    public int calculateScreenRadius() {
+        return (int)(RADIUS_MULT * Math.pow(Math.abs(mass), RADIUS_POWER)/2 + 5);
     }
 
     @Override

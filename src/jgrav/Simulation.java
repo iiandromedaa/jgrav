@@ -10,6 +10,7 @@ public class Simulation {
     private static Simulation instance;
     private volatile List<Body> bodies; 
     private volatile List<Body> cullList;
+    private volatile List<Body> createList;
     private boolean pause;
     private double simTime;
     private double realTime;
@@ -18,6 +19,7 @@ public class Simulation {
     private Simulation() {
         bodies = new ArrayList<>();
         cullList = new ArrayList<>();
+        createList = new ArrayList<>();
         pause = false;
         realTime = 0;
         simTime = 0;
@@ -29,9 +31,9 @@ public class Simulation {
         return instance;
     }
 
-    public void createBody(int x, int y, double mass, Vec2d v) {
+    public void createBody(double x, double y, double mass, Vec2d v) {
         Body body = new Body(x, y, mass, v);
-        bodies.add(body);
+        createList.add(body);
     }
 
     public void clearBodies() {
@@ -40,7 +42,7 @@ public class Simulation {
     }
 
     public void destroyBody(Body body) {
-        bodies.remove(body);
+        cullList.add(body);
     }
 
     public List<Body> getBodies() {
@@ -48,11 +50,14 @@ public class Simulation {
     }
 
     public void updateBodies() {
+        if (!createList.isEmpty())
+            bodies.addAll(createList);
+        createList.clear();
         if (pause || bodies.isEmpty())
             return;
         for (Body body : bodies) {
             body.updatePosition(bodies);
-            if (body.getVelocity().getLength() > 1e7) {
+            if (body.getVelocity().getLength() > 1e6) {
                 log("Body marked for deletion, absurd velocity", LogSeverity.WARN);
                 cullList.add(body);
             }

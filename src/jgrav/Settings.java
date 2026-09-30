@@ -75,6 +75,6 @@ public class Settings {
     /**
      * should bodies collide with each other? smaller one is destroyed, if equal, bodies are both destroyed
      */
-    public static final boolean BODY_COLLISION = false;
+    public static final boolean BODY_COLLISION = true;
 
 }
