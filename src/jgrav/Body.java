@@ -67,10 +67,10 @@ public class Body {
         // mass++ to prevent collisions from happening twice due to the <= comparison
         // its jank but w/e
         mass++;
-        mass += body.getMass();
         Vec2d p = Vec2d.multScalar(velocity, mass);
         Vec2d otherP = Vec2d.multScalar(body.getVelocity(), body.getMass());
         Vec2d newvelocity = Vec2d.divScalar(Vec2d.add(p, otherP), mass);
+        mass += body.getMass();
 
         velocity = newvelocity;
         Simulation.getInstance().destroyBody(body);
