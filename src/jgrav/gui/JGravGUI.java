@@ -130,7 +130,7 @@ public class JGravGUI {
 
         private void drawBody(Body body, Graphics g, boolean fill) {
             Graphics2D g2d = (Graphics2D) g.create();
-            int r = body.calculateScreenRadius();
+            int r = body.getScreenRadius();
             int scrx = (int) (body.getX()/SPACE_SCALE);
             int scry = (int) (body.getY()/SPACE_SCALE);
 

@@ -66,9 +66,9 @@ public class Settings {
 
     /**
      * logging level, accumulative<br>
-     * 3 = info + warn + error<br>
+     * 1 = info + warn + error<br>
      * 2 = warn + error<br>
-     * 1 = error<br>
+     * 3 = error<br>
      */
     public static final int LOGGING = 2;
 

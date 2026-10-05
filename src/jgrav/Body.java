@@ -62,16 +62,18 @@ public class Body {
      */
     public void combine(Body body) {
         Simulation.getInstance().log(
-            String.format("Body collision at %f, %f", x, y), LogSeverity.INFO);
+            String.format("Body collision at %f, %f", x, y), LogSeverity.WARN);
             
-        double newmass = mass + body.getMass();
+        // mass++ to prevent collisions from happening twice due to the <= comparison
+        // its jank but w/e
+        mass++;
+        mass += body.getMass();
         Vec2d p = Vec2d.multScalar(velocity, mass);
         Vec2d otherP = Vec2d.multScalar(body.getVelocity(), body.getMass());
         Vec2d newvelocity = Vec2d.divScalar(Vec2d.add(p, otherP), mass);
 
+        velocity = newvelocity;
         Simulation.getInstance().destroyBody(body);
-        Simulation.getInstance().destroyBody(this);
-        Simulation.getInstance().createBody(x, y, newmass, newvelocity);
     }
 
     private void updateVelocity(List<Body> bodies) {
@@ -80,7 +82,7 @@ public class Body {
         for (Body body : bodies) {
             if (body != this) {
                 if (BODY_COLLISION) {
-                    if (distanceToBody(body).getLength() < calculateScreenRadius()*SPACE_SCALE) {
+                    if (distanceToBody(body).getLength() < getScreenRadius()*SPACE_SCALE/1.25) {
                         if (body.getMass() <= mass) {
                             combine(body);
                         }
@@ -94,8 +96,12 @@ public class Body {
         velocity = Vec2d.add(Vec2d.fromComponent(dax*PHYSICS_DT, day*PHYSICS_DT), velocity);
     }
 
-    public int calculateScreenRadius() {
+    public int getScreenRadius() {
         return (int)(RADIUS_MULT * Math.pow(Math.abs(mass), RADIUS_POWER)/2 + 5);
+    }
+
+    public void setMass(double mass) {
+        this.mass = mass;
     }
 
     @Override

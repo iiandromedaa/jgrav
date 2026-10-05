@@ -51,6 +51,9 @@ public class Simulation {
     }
 
     public void updateBodies() {
+        if (!cullList.isEmpty())
+            bodies.removeAll(cullList);
+        cullList.clear();
         if (!createList.isEmpty())
             bodies.addAll(createList);
         createList.clear();
@@ -64,9 +67,6 @@ public class Simulation {
             }
             log(body.toString(), LogSeverity.INFO);
         }
-        if (!cullList.isEmpty())
-            bodies.removeAll(cullList);
-        cullList.clear();
     }
 
     public void togglePause() {
